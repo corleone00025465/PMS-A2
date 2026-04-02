@@ -1,0 +1,128 @@
+/**
+ * Author: [Your Name]
+ * Part: Part 1 - Outdoor Gear Inventory
+ */
+
+// 1. 定义数据接口 [cite: 28, 41]
+interface GearItem {
+    id: string;
+    name: string;
+    category: 'Electronics' | 'Furniture' | 'Clothing' | 'Tools' | 'Miscellaneous';
+    quantity: number;
+    price: number;
+    supplier: string;
+    status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+    isPopular: 'Yes' | 'No';
+    comment?: string;
+}
+
+// 2. 初始化数据库数组 [cite: 26]
+let inventory: GearItem[] = [];
+
+// 辅助工具：显示消息区域 [cite: 38]
+function showMessage(text: string, isError: boolean = false) {
+    const msgEl = document.getElementById('displayMessage')!;
+    msgEl.innerHTML = text;
+    msgEl.className = isError ? 'error' : 'success';
+}
+
+// 3. 添加功能 (Add Item) 
+function addItem() {
+    const id = (document.getElementById('itemId') as HTMLInputElement).value;
+    const name = (document.getElementById('itemName') as HTMLInputElement).value;
+    const qty = Number((document.getElementById('quantity') as HTMLInputElement).value);
+    const price = Number((document.getElementById('price') as HTMLInputElement).value);
+
+    // 数据验证 
+    if (!id || !name || isNaN(qty) || isNaN(price)) {
+        showMessage("Error: All fields (except comment) are required and must be valid!", true);
+        return;
+    }
+
+    // ID 唯一性检查 
+    if (inventory.find(i => i.id === id)) {
+        showMessage(`Error: Item ID "${id}" already exists!`, true);
+        return;
+    }
+
+    const newItem: GearItem = {
+        id, name,
+        category: (document.getElementById('category') as HTMLSelectElement).value as any,
+        quantity: qty,
+        price: price,
+        supplier: (document.getElementById('supplier') as HTMLInputElement).value,
+        status: (document.getElementById('stockStatus') as HTMLSelectElement).value as any,
+        isPopular: (document.getElementById('isPopular') as HTMLSelectElement).value as any,
+        comment: (document.getElementById('comment') as HTMLInputElement).value
+    };
+
+    inventory.push(newItem);
+    showMessage(`Added: ${name} successfully.`);
+    renderTable(inventory);
+}
+
+// 4. 更新功能 (Update by Name) 
+function updateItem() {
+    const nameToUpdate = (document.getElementById('itemName') as HTMLInputElement).value;
+    const item = inventory.find(i => i.name.toLowerCase() === nameToUpdate.toLowerCase());
+
+    if (item) {
+        item.quantity = Number((document.getElementById('quantity') as HTMLInputElement).value);
+        item.price = Number((document.getElementById('price') as HTMLInputElement).value);
+        item.status = (document.getElementById('stockStatus') as HTMLSelectElement).value as any;
+        showMessage(`Updated: ${item.name} information.`);
+        renderTable(inventory);
+    } else {
+        showMessage(`Error: No item found with name "${nameToUpdate}" to update.`, true);
+    }
+}
+
+// 5. 删除功能 (Delete with Confirmation) 
+function deleteItem(name: string) {
+    // 使用确认弹窗 
+    const confirmed = confirm(`Are you sure you want to delete "${name}"?`);
+    if (confirmed) {
+        inventory = inventory.filter(i => i.name !== name);
+        showMessage(`Deleted: ${name}`);
+        renderTable(inventory);
+    }
+}
+
+// 6. 搜索功能 (Search by Name) [cite: 34]
+function searchItem() {
+    const term = (document.getElementById('itemName') as HTMLInputElement).value.toLowerCase();
+    const results = inventory.filter(i => i.name.toLowerCase().includes(term));
+    renderTable(results);
+    showMessage(`Found ${results.length} item(s) matching "${term}".`);
+}
+
+// 7. 显示热门项目 [cite: 36]
+function displayPopular() {
+    const popularItems = inventory.filter(i => i.isPopular === 'Yes');
+    renderTable(popularItems);
+    showMessage("Displaying all popular gear.");
+}
+
+// 8. 渲染表格 [cite: 35]
+function renderTable(data: GearItem[]) {
+    const body = document.getElementById('inventoryBody')!;
+    body.innerHTML = '';
+
+    data.forEach(item => {
+        const row = `
+            <tr>
+                <td>${item.id}</td>
+                <td>${item.name} ${item.isPopular === 'Yes' ? '<span class="popular-badge">POPULAR</span>' : ''}</td>
+                <td>${item.category}</td>
+                <td>${item.quantity}</td>
+                <td>$${item.price}</td>
+                <td>${item.status}</td>
+                <td>
+                    <button style="background:#e57373; border:none; color:white; padding:5px; border-radius:4px;" 
+                            onclick="deleteItem('${item.name}')">Delete</button>
+                </td>
+            </tr>
+        `;
+        body.innerHTML += row;
+    });
+}
